@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>02</title>
+		<style type="text/css">
+			canvas {
+				border: 1px dashed #000;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="cvs" width="600" height="400"></canvas>
+		<div>
+			<button onclick="addRandomCircle()">Add Circle</button>
+			<button onclick="clearCanvas()">Clear Canvas</button>
+		</div>
+	</body>
+	<script type="text/javascript">
+		var cvs = document.getElementById('cvs'),
+			ctx = cvs.getContext('2d'),
+		//保存所有圆的数组
+			circles = [],
+			previousSelectedCircle,
+			isDragging = false;
+			
+			
+		cvs.onmousedown = canvasClick;
+		cvs.onmouseup = stopDragging;
+		cvs.onmouseout = stopDragging;
+		cvs.onmousemove = dragCircle;
+		
+		//画布点击事件
+		function canvasClick(e){
+			//取得画布上被单击的点
+			var clickX = e.pageX - cvs.offsetLeft,
+				clickY = e.pageY - cvs.offsetTop;
+			
+			//查找被单击的圆圈
+			for (var i=circles.length-1;i>=0;i--) {//后画的圆圈在上面，反向遍历数组
+				//使用勾股定理计算这个点与圆心之间的距离
+				var distanceFromCenter = 
+				Math.sqrt(Math.pow(circles[i].x -clickX,2)+ Math.pow(circles[i].y -clickY,2));
+				//判断这个点是否在圆圈中
+				if(distanceFromCenter <= circles[i].radius){
+					if(previousSelectedCircle != null){
+						previousSelectedCircle.isSelected = false;
+					}
+					previousSelectedCircle = circles[i];
+					
+					circles[i].isSelected = true;
+					isDragging = true;
+					
+					drawCircles();
+					
+					return;
+				}
+			}
+		}
+		
+		//圆圈移动
+		function dragCircle(e){
+			//如果允许拖动
+			if (isDragging==true) {
+				if (previousSelectedCircle != null) {
+					//获取新的坐标
+					var x = e.pageX - cvs.offsetLeft,
+						y = e.pageY - cvs.offsetTop;
+					//圆圈移动到新的坐标
+					previousSelectedCircle.x = x;
+					previousSelectedCircle.y = y;
+					//重绘
+					drawCircles();
+				}
+			}
+		}
+		
+		//停止移动
+		function stopDragging(){
+			isDragging = false;
+		}
+		
+		
+		
+		//添加圆
+		function addRandomCircle(){
+			//为圆圈计算一个随机大小和位置
+			var radius = randomFromTo(10,60),
+				x = randomFromTo(0,cvs.width),
+				y = randomFromTo(0,cvs.height);
+			
+			//为圆圈计算一个随机颜色
+			var colors = ["green","blue","red","yellow","magenta","orange","brown"],
+				color = colors[randomFromTo(0,6)];
+			
+			//创建一个新圆
+			var circ = new Circle(x,y,radius,color);
+			
+			//保存进数组
+			circles.push(circ);
+			
+			//重新绘制
+			drawCircles();
+		}
+		
+		//自定义随机圆的大小和位置
+		function randomFromTo(from,to){
+			return Math.floor(Math.random()*(to-from+1)+from);
+		}
+		
+		//绘图
+		function drawCircles(){
+			//清除画布，准备绘制
+			ctx.clearRect(0,0,cvs.width,cvs.height);
+			ctx.globalAlpha = 0.85;
+			ctx.strokeStyle = "black";
+			//遍历所有圆圈
+			for (var i=0;i<circles.length;i++) {
+				var cir = circles[i];
+				
+				ctx.beginPath();
+				ctx.arc(cir.x,cir.y,cir.radius,0,Math.PI*2);
+				ctx.fillStyle = cir.color;
+				
+				//判断是否被选中
+				if (cir.isSelected) {
+					ctx.lineWidth = 5;
+					ctx.strokeStyle = "skyblue";
+				}else{
+					ctx.strokeStyle = "black";
+					ctx.lineWidth = 1;
+				}
+				
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+		
+		//清除画布
+		function clearCanvas(){
+			//清空数组
+			circles = [];
+			//绘制图形
+			drawCircles();
+		}
+		
+		//创建圆的构造函数
+		function Circle(x,y,radius,color){
+			this.x = x;
+			this.y = y;
+			this.radius = radius;
+			this.color = color;
+			this.isSelected = false;
+		}
+	</script>
+</html>
